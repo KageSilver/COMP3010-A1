@@ -62,41 +62,37 @@ serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 hostname = socket.gethostname()
 print("listening on interface " + hostname)
 # This accepts a tuple...
-serversocket.bind(('', PORT))
+serversocket.bind((HOST, PORT))
 # become a server socket
 serversocket.listen()
 
 
-
+# Keep running the server until we decide to kill it
 while True:
-    conn, addr = serversocket.accept()
-    with conn: # this is a socket! With syntax does not work on python 2
+    conn, addr = serversocket.accept() #client socket
+    with conn:
         try:
-            conn.settimeout(5)
-            conn.sendall(head)
+            conn.settimeout(5) #Giving them a chance to connect before cleaning
+            conn.sendall(head) #sending what is contained within the head file
             print('Connected by', addr)
             data = conn.recv(1024)
+            #Decoding the message received from the client (would be to decide which site we're displaying)
             print("heard:")
             print(data.decode('UTF-8'))
             strData = data.decode('UTF-8')
 
-            # is it JSON?
-            wasJson = False
+            # Do some work with the data that we received from the client
+            randomBoolean = True
             try:
-                # {"host":"localhost", "port": 42422}
-                # echo '{"host":"crow.cs.umanitoba.ca", "port": 42422}' | nc robin.cs.umanitoba.ca 42424
-                jData = json.loads(strData)
-                host = jData['host']
-                port = jData['port']
-                wasJson=True
+                print("yes")
             except:
                 # it's fine....
-                print("Not json" + strData)
+                print("No, it isn't fine" + strData)
                 
 
 
             # just say something
-            if wasJson:
+            if randomBoolean:
                 conn.sendall(b'You did it!')
             elif strData.lower().find("please") >= 0:
                 conn.sendall(b'You said please')

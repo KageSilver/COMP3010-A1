@@ -14,10 +14,10 @@ import socket
 import time
 import json
 
-serverHost = 'cs.umanitoba.ca'
+serverHost = 'aviary.cs.umanitoba.ca' #replace aviary with the machine the server is running on
 serverPort = 8680
 
-clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 clientSocket.bind((socket.gethostname(), 0))
 
@@ -29,6 +29,10 @@ print('listening on port:', port)
 
 with clientSocket:
     # send a message, listen for it
-    clientSocket.sendto("hello".encode(), (serverHost, serverPort))
-    data, addr  = clientSocket.recvfrom(2048)
-    print(data.decode('utf-8)'))
+    try:
+        clientSocket.connect((serverHost, serverPort))
+        clientSocket.sendall('hello world'.encode())
+        data = clientSocket.recv(2048)
+        print('Received', data.decode('utf-8'))
+    except:
+        print("Could not connect socket")
