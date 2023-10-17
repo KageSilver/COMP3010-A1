@@ -30,41 +30,48 @@ modifiedTime = datetime.datetime.fromtimestamp(modifiedTimestamp, tz=pytz.timezo
 forHeader = modifiedTime.strftime(lastUpdatedPattern)
 
 
-HOST = 'webserver.py'                 # Symbolic name meaning all available interfaces
+HOST = ''                 # Symbolic name meaning all available interfaces
 
 # parsing the command line arguments
 if ( len(sys.argv) == 4 ) :
-    PORT = sys.argv[1]
-    SITE = open(sys.argv[2], "r")
+    PORT = int(sys.argv[1])
+    SITE = sys.argv[2]
     ifMulti = sys.argv[3]
 elif ( len(sys.argv) == 3 ) :
-    PORT = sys.argv[1]
-    SITE = open(sys.argv[2], "r")
+    PORT = int(sys.argv[1])
+    SITE = sys.argv[2]
     ifMulti = False
 else :
     raise Exception ( "Invalid number of arguments, please use the format:\n"
-                     + " \"python3 webserver.py 8000 files-distribution -m\"\n"
+                     + " \"python3 webserver.py 8680 files-distribution -m\"\n"
                      + " either with, or without the \"-m\".")
 
 #Will need to contain all of the information passed in by the command line,
 #with the appropriate values included
-head = """HTTP/1.1 200 OK
-Content-Length: {}
-Content-Type: text/html
-Last-Modified:
-Server: Faerun
-"""
+head = ("HTTP/1.1 200 OK\n"
+"Content-Length: {}\n"
+"Content-Type: text/html\n"
+"Last-Modified:"+forHeader+
+"\nServer: Faerun\n\n")
 
-# should get filled by the site information
-body = """
-"""
 
+# Do some work with the SITE constant to actually make it something the
+# client can view. Need to go into the directory and open it.
+if (SITE == "site1") :
+    SITE = "./site1"
+elif (SITE == "site2") :
+    SITE = "./site2"
+elif (SITE == "site3-stretch") :
+    SITE = "./site3-stretch"
+else :
+    print ("invalid file name provided")
 
 # create an INET, STREAMing socket
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # bind the socket to a public host, and a well-known port
 hostname = socket.gethostname()
 print("listening on interface " + hostname)
+print('listening on port:', PORT)
 # This accepts a tuple...
 serversocket.bind((HOST, PORT))
 # become a server socket
@@ -76,7 +83,8 @@ while True:
     conn, addr = serversocket.accept() #client socket
     with conn:
         try:
-            conn.settimeout(5) #Giving them a chance to connect before cleaning thier socket
+            conn.settimeout(5) #Giving them a chance to connect before cleaning
+            conn.sendall(head.encode()) #sending what is contained within the head file (only if they request it)
             print('Connected by', addr)
             data = conn.recv(1024)
             #Decoding the message received from the client (would be to decide which site we're displaying)
@@ -84,25 +92,14 @@ while True:
             print(data.decode('UTF-8'))
             strData = data.decode('UTF-8')
 
-            # Do some work with the data requested from the client
+            # Do some work with the data that we received from the client (get and head)
             randomBoolean = True
             try:
                 print("yes")
             except:
                 # it's fine....
                 print("No, it isn't fine" + strData)
-            
-            # just say something
-            if randomBoolean:
-                conn.sendall(b'You did it!')
-            elif strData.lower().find("please") >= 0:
-                conn.sendall(b'You said please')
-            else:
-                conn.sendall(b'try again')
-    
-            data = head.format(len(body)) + "\n" + body
-            conn.sendall(data.encode()) #sending what is contained within the head file
-            
+                
 
         except Exception as e:
             print(e)
