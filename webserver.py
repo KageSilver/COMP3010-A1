@@ -55,6 +55,10 @@ Last-Modified:
 Server: Faerun
 """
 
+# should get filled by the site information
+body = """
+"""
+
 
 # create an INET, STREAMing socket
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -72,8 +76,7 @@ while True:
     conn, addr = serversocket.accept() #client socket
     with conn:
         try:
-            conn.settimeout(5) #Giving them a chance to connect before cleaning
-            conn.sendall(head) #sending what is contained within the head file
+            conn.settimeout(5) #Giving them a chance to connect before cleaning thier socket
             print('Connected by', addr)
             data = conn.recv(1024)
             #Decoding the message received from the client (would be to decide which site we're displaying)
@@ -81,16 +84,14 @@ while True:
             print(data.decode('UTF-8'))
             strData = data.decode('UTF-8')
 
-            # Do some work with the data that we received from the client
+            # Do some work with the data requested from the client
             randomBoolean = True
             try:
                 print("yes")
             except:
                 # it's fine....
                 print("No, it isn't fine" + strData)
-                
-
-
+            
             # just say something
             if randomBoolean:
                 conn.sendall(b'You did it!')
@@ -98,6 +99,10 @@ while True:
                 conn.sendall(b'You said please')
             else:
                 conn.sendall(b'try again')
+    
+            data = head.format(len(body)) + "\n" + body
+            conn.sendall(data.encode()) #sending what is contained within the head file
+            
 
         except Exception as e:
             print(e)
