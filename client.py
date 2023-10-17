@@ -12,9 +12,8 @@
 
 import socket
 import time
-import json
 
-serverHost = 'aviary.cs.umanitoba.ca' #replace aviary with the machine the server is running on
+serverHost = 'DESKTOP-7US2QRP' #replace aviary with the machine the server is running on
 serverPort = 8680
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,12 +26,12 @@ print("listening on interface " + hostname)
 port = clientSocket.getsockname()[1]
 print('listening on port:', port)
 
-with clientSocket:
-    # send a message, listen for it
-    try:
-        clientSocket.connect((serverHost, serverPort))
-        clientSocket.sendall('hello world'.encode())
-        data = clientSocket.recv(2048)
-        print('Received', data.decode('utf-8'))
-    except:
-        print("Could not connect socket")
+
+# send a message, listen for it
+try:
+    clientSocket.connect((serverHost, serverPort))
+    clientSocket.sendall('hello world'.encode())
+    data = clientSocket.recv(1024)
+    print('Received: ', data.decode('utf-8'))
+except Exception as e:
+    print(e)
