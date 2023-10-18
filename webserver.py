@@ -5,7 +5,7 @@
 # STUDENT NUMBER	: 7922331
 # COURSE		: COMP 3010
 # INSTRUCTOR	: Robert Guderian
-# ASSIGNMENT	: Assignment 1
+# ASSIGNMENT	: Assignment 1 Part 1
 # 
 # REMARKS: This is a basic creation of a multi-threaded
 #       web server.
@@ -17,20 +17,37 @@ import socket
 import sys
 import os
 import re
-import time
 import threading
 import pytz
 import datetime
 
-#Aetting the last updated timestamp
-lastUpdatedPattern = "%a, %d %b %Y %H:%M:%S %Z"
-modifiedTimestamp = os.path.getmtime("webserver.py")
-# hardcoding Winnipeg for simplicity
-modifiedTime = datetime.datetime.fromtimestamp(modifiedTimestamp, tz=pytz.timezone("America/Winnipeg"))
-forHeader = modifiedTime.strftime(lastUpdatedPattern)
-
 
 HOST = ''                 # Symbolic name meaning all available interfaces
+# PORT and SITE also exist, with port being the number, site being the one we'll serve
+
+FILE_TYPES = {
+    ".txt":"text/html",
+    ".html":"text/html",
+    ".jpeg":"jpeg/png",
+    ".png":"jpeg/png",
+    ".json":"application/json"
+}
+
+# HTTP responses
+BAD_REQUEST = "400 Bad Request\nPlease only make a GET or HEAD request"
+PAGE_NOT_FOUND = "404 File Not Found"
+OK = "200 OK"
+
+
+#Contains the format for a response header to the client's requests
+responseHeader = """HTTP/1.1 {0}
+Content-Length: {1}
+Content-Type: {2}
+Last-Modified: {3}
+Connection: Keep-Alive
+Keep-Alive: timeout=5, max=100
+Server: Faerun\n\n"""
+
 
 # parsing the command line arguments
 if ( len(sys.argv) == 4 ) :
@@ -46,60 +63,92 @@ else :
                      + " \"python3 webserver.py 8680 files-distribution -m\"\n"
                      + " either with, or without the \"-m\".")
 
-#Will need to contain all of the information passed in by the command line,
-#with the appropriate values included
-head = ("HTTP/1.1 200 OK\n"
-"Content-Length: {}\n"
-"Content-Type: text/html\n"
-"Last-Modified:"+forHeader+
-"\nServer: Faerun\n\n")
 
+# Change the SITE constant to be the path pointing to the site
+if ( (SITE != "site1") & (SITE !="site2") & (SITE !="site3-stretch") ) :
+    raise Exception ("Invalid directory name provided. Please enter site1 or site2.")
 
-# Do some work with the SITE constant to actually make it something the
-# client can view. Need to go into the directory and open it.
-if (SITE == "site1") :
-    SITE = "./site1"
-elif (SITE == "site2") :
-    SITE = "./site2"
-elif (SITE == "site3-stretch") :
-    SITE = "./site3-stretch"
-else :
-    print ("invalid file name provided")
+#Getting the last updated timestamp
+lastUpdatedPattern = "%a, %d %b %Y %H:%M:%S %Z"
+modifiedTimestamp = os.path.getmtime("webserver.py")
+# hardcoding Winnipeg for simplicity
+modifiedTime = datetime.datetime.fromtimestamp(modifiedTimestamp, tz=pytz.timezone("America/Winnipeg"))
+lastModified = modifiedTime.strftime(lastUpdatedPattern)
+
+# bind the socket to a public host, and a well-known port
+hostName = socket.gethostname()
+print("listening on interface " + hostName)
+print('listening on port:', PORT)
+
 
 # create an INET, STREAMing socket
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# bind the socket to a public host, and a well-known port
-hostname = socket.gethostname()
-print("listening on interface " + hostname)
-print('listening on port:', PORT)
+serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # This accepts a tuple...
-serversocket.bind((HOST, PORT))
+serverSocket.bind((HOST, PORT))
 # become a server socket
-serversocket.listen()
+serverSocket.listen()
 
 
+def handleThread(clientConnection:socket,nothing:None) :
+    with clientConnection:
+        try:
+            #print('Connected by', clientAddress)
+            clientRequest = clientConnection.recv(1024)
+            #Decoding the message received from the client
+            requestString = clientRequest.decode('utf-8')
+
+            # HTTP requests will always have the same format
+            requestTokens = requestString.split()
+
+            requestMethod = requestTokens[0]
+            requestPath = "./"+SITE+requestTokens[1]
+            #requestPath = os.path.join(SITE,requestTokens[1])
+
+            if ( requestMethod == "GET" ) :
+                # Make sure that the client sent an actual path, if they didn't, send 404
+                if ( os.path.isfile(requestPath) ) :
+                    #print("Read Path: " + requestPath) #for debugging
+                    #grabbing the body of what they requested
+                    body = open(requestPath, mode="rb").read()
+                    #setting the response header
+                    fileSize = os.path.getsize(requestPath)
+                    fileType = os.path.splitext(requestPath)
+                    if(len(fileType)<=2):
+                        header = responseHeader.format(OK,fileSize,fileType[1],lastModified)
+                    header = responseHeader.format(OK,fileSize,'',lastModified)
+                    clientConnection.sendall(header.encode())
+                    #body is already in bytes
+                    clientConnection.sendall(body)
+                else :
+                    #print("Did not read path: " + requestPath) #for debugging
+                    header = responseHeader.format(PAGE_NOT_FOUND,'','',lastModified)
+                    clientConnection.sendall(header.encode())
+
+            elif ( requestMethod == "HEAD" ) :
+                responseHeader.format(OK,'','',lastModified)
+                clientConnection.sendall(responseHeader.encode())
+            else :
+                clientConnection.sendall(BAD_REQUEST.encode())
+
+        except Exception as e :
+            print("Something happened in client sending. ")
+            print(e)
+
+
+hitCounts = 0
 # Keep running the server until we decide to kill it
 while True:
-    conn, addr = serversocket.accept() #client socket
-    with conn:
-        try:
-            conn.settimeout(5) #Giving them a chance to connect before cleaning
-            conn.sendall(head.encode()) #sending what is contained within the head file (only if they request it)
-            print('Connected by', addr)
-            data = conn.recv(1024)
-            #Decoding the message received from the client (would be to decide which site we're displaying)
-            print("heard:")
-            print(data.decode('UTF-8'))
-            strData = data.decode('UTF-8')
+    try :
+        clientConnection, clientAddress = serverSocket.accept() #client socket
+        hitCounts += 1
+        clientConnection.settimeout(60) #Giving them a chance to do stuff before cleaning
+        if ( ifMulti ) :
+            threading.Thread(target=handleThread,args=(clientConnection,'')).start()
+        else :
+            threading.Thread(target=handleThread,args=(clientConnection,'')).run()
 
-            # Do some work with the data that we received from the client (get and head)
-            randomBoolean = True
-            try:
-                print("yes")
-            except:
-                # it's fine....
-                print("No, it isn't fine" + strData)
-                
-
-        except Exception as e:
-            print(e)
+        print("Running {} threads.".format(threading.active_count()))
+    except Exception as e :
+        print("Something went wrong! ")
+        print(e)
