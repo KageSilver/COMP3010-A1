@@ -6,9 +6,11 @@
 # COURSE		: COMP 3010
 # INSTRUCTOR	: Robert Guderian
 # ASSIGNMENT	: Assignment 1 Part 2
+# FILE NAME     : testingServer.py
 # 
-# REMARKS: This is a basic creation of a multi-threaded
-#       client.
+# REMARKS: This is a multi-threaded client
+#   that is used to test the capabilities of
+#   the server created in Part 1.
 #
 #------------------------------------------
 
@@ -34,11 +36,8 @@ for i in range(100) :
     thread.start()
     threads.append(thread)
 
-numThreads = 0
-
 for thread in threads :
     thread.join()
-    numThreads += 1
 
 timeEnd = time.time()
 

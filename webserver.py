@@ -25,14 +25,6 @@ import datetime
 HOST = ''                 # Symbolic name meaning all available interfaces
 # PORT and SITE also exist, with port being the number, site being the one we'll serve
 
-FILE_TYPES = {
-    ".txt":"text/html",
-    ".html":"text/html",
-    ".jpeg":"jpeg/png",
-    ".png":"jpeg/png",
-    ".json":"application/json"
-}
-
 # HTTP responses
 BAD_REQUEST = "400 Bad Request\nPlease only make a GET or HEAD request"
 PAGE_NOT_FOUND = "404 File Not Found"
@@ -44,8 +36,6 @@ responseHeader = """HTTP/1.1 {0}
 Content-Length: {1}
 Content-Type: {2}
 Last-Modified: {3}
-Connection: Keep-Alive
-Keep-Alive: timeout=5, max=100
 Server: Faerun\n\n"""
 
 
