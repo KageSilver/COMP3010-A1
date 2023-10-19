@@ -1,5 +1,3 @@
-all: run
-
 compile:
 	gcc scraper.c
 
@@ -7,24 +5,18 @@ run:
 	gcc scraper.c
 	./scraper
 
-runAndTestSite1: runSite1 testSite1
-runAndTestSite2: runSite2 testSite2
-runAndTestSite3: runSite3 testSite3
 
-runSite1:
+runSite1Single:
 	python3 webserver.py 8680 site1
+runSite1Multi:
+	python3 webserver.py 8680 site1 -m
 
-testSite1:
-	python3 testingServer.py site1
-
-runSite2:
+runSite2Single:
 	python3 webserver.py 8680 site2
+runSite2Multi:
+	python3 webserver.py 8680 site2 -m
 
-testSite2:
-	python3 testingServer.py site2
-
-runSite3:
+runSite3Single:
 	python3 webserver.py 8680 site3
-
-testSite3:
-	python3 testingServer.py site3
+runSite3Multi:
+	python3 webserver.py 8680 site3 -m

@@ -16,7 +16,6 @@
 import socket
 import sys
 import os
-import re
 import threading
 import pytz
 import datetime
@@ -79,7 +78,7 @@ serverSocket.bind((HOST, PORT))
 # become a server socket
 serverSocket.listen()
 
-
+# Function to do something with the given thread
 def handleThread(clientConnection:socket,nothing:None) :
     with clientConnection:
         try:
@@ -104,7 +103,7 @@ def handleThread(clientConnection:socket,nothing:None) :
                     #setting the response header
                     fileSize = os.path.getsize(requestPath)
                     fileType = os.path.splitext(requestPath)
-                    if(len(fileType)<=2):
+                    if ( len(fileType)<=2 ) :
                         header = responseHeader.format(OK,fileSize,fileType[1],lastModified)
                     header = responseHeader.format(OK,fileSize,'',lastModified)
                     clientConnection.sendall(header.encode())
