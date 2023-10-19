@@ -79,7 +79,7 @@ serverSocket.bind((HOST, PORT))
 serverSocket.listen()
 
 # Function to do something with the given thread
-def handleThread(clientConnection:socket,nothing:None) :
+def handleThread(clientConnection:socket) :
     with clientConnection:
         try:
             #print('Connected by', clientAddress)
@@ -133,9 +133,9 @@ while True:
         hitCounts += 1
         clientConnection.settimeout(60) #Giving them a chance to do stuff before cleaning
         if ( ifMulti ) :
-            threading.Thread(target=handleThread,args=(clientConnection,'')).start()
+            threading.Thread(target=handleThread,args=(clientConnection,)).start()
         else :
-            threading.Thread(target=handleThread,args=(clientConnection,'')).run()
+            threading.Thread(target=handleThread,args=(clientConnection,)).run()
 
         print("Running {} threads.".format(threading.active_count()))
     except Exception as e :

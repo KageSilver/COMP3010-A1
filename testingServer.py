@@ -14,15 +14,17 @@
 #
 #------------------------------------------
 
+# imports required to run the program
 import requests
 import threading
 import time
-import sys
 import csv
 
 
-# URL of the website I'm testing, will be run on Aviary
-url = "http://localhost:8680/files-distribution/images.html"
+# URL of the website I'm testing, either tested on aviary or on
+# my local machine
+url = "http://grouse.cs.umanitoba.ca:8680/files-distribution/images.html"
+#url = "http://localhost:8680/files-distribution/images.html"
 
 # For all of the threads I'll be making
 threads = []
@@ -40,14 +42,15 @@ for i in range(100) :
     thread.start()
     threads.append(thread)
 
-# Run all threads
+# Run all threads concurrently
 for thread in threads :
     thread.join()
 
 timeEnd = time.time()
 
-#write to the specified csv file
-csvFile = open("./summarySingle.csv","a",newline='')
+# Write to the specified csv file
+#csvFile = open("./summarySingle.csv","a",newline='')
+csvFile = open("./summaryMulti.csv","a",newline='')
 csvWriter = csv.writer(csvFile)
 csvWriter.writerow((timeEnd-timeStart,))
 

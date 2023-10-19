@@ -2,7 +2,6 @@ compile:
 	gcc scraper.c
 
 run:
-	gcc scraper.c
 	./scraper
 
 
