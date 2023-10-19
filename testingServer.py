@@ -31,6 +31,7 @@ threads = []
 
 timeStart = time.time()
 
+# Function to actually make the request for the desired url of the webserver
 def makeRequest(url) :
     response = requests.get(url)
     #for debugging
@@ -48,10 +49,11 @@ for thread in threads :
 
 timeEnd = time.time()
 
-# Write to the specified csv file
+# Write to the specified csv file depending on which server is being run
 #csvFile = open("./summarySingle.csv","a",newline='')
 csvFile = open("./summaryMulti.csv","a",newline='')
 csvWriter = csv.writer(csvFile)
 csvWriter.writerow((timeEnd-timeStart,))
 
+# Cleanup time
 csvFile.close()
