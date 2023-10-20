@@ -25,9 +25,23 @@ HOST = ''                 # Symbolic name meaning all available interfaces
 # PORT and SITE also exist, with port being the number, site being the one we'll serve
 
 # HTTP responses
-BAD_REQUEST = "400 Bad Request\nPlease only make a GET or HEAD request"
+BAD_REQUEST = "400 Bad Request"
 PAGE_NOT_FOUND = "404 File Not Found"
 OK = "200 OK"
+SERVER_MESSED_UP = "500 Internal Server Error"
+
+MIMETYPES = {
+    "text/html": ".html",
+    "text/plain": ".txt",
+    "text/javascript": ".js",
+    "image/jpeg": ".jpeg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    "application/json": ".json",
+    "image/vnd.microsoft.icon": ".ico",
+    "application/xml": ".xml",
+}
+
 
 
 # Contains the format for a response header to the client's requests
@@ -112,12 +126,22 @@ def handleThread(clientConnection:socket) :
                     fileType = os.path.splitext(requestPath)
                     # Make sure we can access the type of the file
                     if ( len(fileType)<=2 ) :
-                        header = responseHeader.format(OK,fileSize,fileType[1],lastModified)
+                        # Now check if that mimetype is supported
+                        print (fileType[1])
+                        print(MIMETYPES.values())
+                        print(fileType[1] in MIMETYPES.values())
+                        if fileType[1] in MIMETYPES.values() :
+                            header = responseHeader.format(OK,fileSize,fileType[1],lastModified)
+                            clientConnection.sendall(header.encode()) # Send the header
+                            # The body is already in bytes
+                            clientConnection.sendall(body)  # Then send the body
+                        else :
+                            header = header = responseHeader.format(SERVER_MESSED_UP,'','',lastModified)
+                            clientConnection.sendall(header.encode()) # Send the header
                     else : 
-                        header = responseHeader.format(OK,fileSize,'',lastModified)
-                    clientConnection.sendall(header.encode()) # Send the header
-                    # The body is already in bytes
-                    clientConnection.sendall(body)  # Then send the body
+                        header = responseHeader.format(SERVER_MESSED_UP,'','',lastModified)
+                        clientConnection.sendall(header.encode()) # Send the header
+
                 else :
                     #print("Did not read path: " + requestPath) # For debugging
                     header = responseHeader.format(PAGE_NOT_FOUND,'','',lastModified)
